@@ -7,11 +7,11 @@
 #define SERVO2_DELAY 20
 #define SERVO2_LONG_DELAY 1000
 
-#define TRIG_PIN 6
-#define ECHO_PIN 7
+#define TRIG_PIN 11
+#define ECHO_PIN 12
 
-#define TRIG2_PIN 11
-#define ECHO2_PIN 12
+#define TRIG2_PIN 6
+#define ECHO2_PIN 7
 
 Servo myservo;
 Servo myservo2;
@@ -19,6 +19,8 @@ int angle1 = 0;
 int direction1 = 1;
 int angle2 = 0;
 int direction2 = 1;
+
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -63,11 +65,12 @@ long getDistance(int trigPin, int echoPin)
   return distanceCm;
 }
 
-void runServo(Servo servoIn, int & angle, int & direction)
+void runServo(Servo servoIn, int & angle, int & direction, int angleChange)
 {
+    while (withinRange()) {}
     // put your main code here, to run repeatedly:
     servoIn.write(angle);
-    angle += direction * 5;
+    angle += direction * angleChange;
 
     if (angle > 180)
     {
@@ -79,32 +82,59 @@ void runServo(Servo servoIn, int & angle, int & direction)
     }
 }
 
+void goMax(Servo servoIn, int & angle, int & direction)
+{
+  while (angle < 180)
+  {
+    runServo(servoIn, angle, direction, 20);
+  }
+
+}
+
+void goMin(Servo servoIn, int & angle, int & direction)
+{
+    while (angle > 0)
+  {
+    runServo(servoIn, angle, direction, 20);
+  }
+}
+
+bool withinRange()
+{
+  return getDistance(TRIG_PIN, ECHO_PIN) < 20.0;
+}
+
 void loop() {
 
   long dis1 = getDistance(TRIG_PIN, ECHO_PIN);
-  // delay(100);
-  long dis2 = getDistance(TRIG2_PIN, ECHO2_PIN);
+  delay(100);
+  // long dis2 = getDistance(TRIG2_PIN, ECHO2_PIN);
 
   // Print the distance to the Serial Monitor
   Serial.print("Distance 1: ");
   Serial.print(dis1);
   Serial.println(" cm");
 
-  Serial.print("Distance 2: ");
-  Serial.print(dis2);
-  Serial.println(" cm");
+  // Serial.print("Distance 2: ");
+  // Serial.print(dis2);
+  // Serial.println(" cm");
   
   
-  if ((dis1 < 20.0) || (dis2 < 20.0))
+
+    
+  runServo(myservo, angle1, direction1, 20);
+  if (direction2 > 0)
   {
-    // Wait for 100 milliseconds before the next measurement
-    delay(100);
+    goMax(myservo2, angle2, direction2);
+    direction2 *= -1;
   }
   else
   {
-    
-    runServo(myservo, angle1, direction1);
-    runServo(myservo2, angle2, direction2);
-    delay(SERVO_DELAY);
+    goMin(myservo2, angle2, direction2);
+    direction2 *= -1;
   }
+
+  
+  delay(SERVO_DELAY);
+
 }
